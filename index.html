@@ -1049,12 +1049,32 @@ function submitToSheets() {
     extraContext: val('extraContext')
   };
 
-  fetch(SHEETS_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(() => {});
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = SHEETS_URL;
+  form.target = 'hidden-iframe';
+  form.style.display = 'none';
+
+  Object.entries(payload).forEach(([key, value]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = value || '';
+    form.appendChild(input);
+  });
+
+  let iframe = document.getElementById('hidden-iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.name = 'hidden-iframe';
+    iframe.id = 'hidden-iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
 }
 
 init();
