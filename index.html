@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STR Sales Coach Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    header p {
+      color: #94a3b8;
+      font-size: 1.05rem;
+    }
+    .progress-bar { display: flex; gap: 0.35rem; margin-bottom: 2rem; }
+    .progress-step {
+      flex: 1; height: 4px; border-radius: 2px;
+      background: #1e293b; transition: background 0.3s;
+    }
+    .progress-step.active { background: #38bdf8; }
+    .progress-step.done { background: #818cf8; }
+    .step-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.8rem; color: #64748b; margin-bottom: 1.5rem;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    .section h2 {
+      font-size: 1.35rem; font-weight: 600;
+      margin-bottom: 0.4rem; color: #f1f5f9;
+    }
+    .section .subtitle {
+      color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;
+    }
+    .field { margin-bottom: 1.5rem; }
+    .field label {
+      display: block; font-weight: 500; margin-bottom: 0.4rem;
+      color: #cbd5e1; font-size: 0.95rem;
+    }
+    .field .hint {
+      font-size: 0.82rem; color: #64748b;
+      margin-bottom: 0.4rem; font-style: italic;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%; padding: 0.75rem 1rem; border-radius: 8px;
+      border: 1px solid #334155; background: #1e293b;
+      color: #e2e8f0; font-size: 0.95rem; font-family: inherit;
+      transition: border 0.2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      outline: none; border-color: #38bdf8;
+    }
+    .field textarea { resize: vertical; min-height: 100px; }
+    .field select option { background: #1e293b; }
+
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem; }
+    .checkbox-group label {
+      display: flex; align-items: center; gap: 0.4rem;
+      background: #1e293b; border: 1px solid #334155;
+      padding: 0.5rem 0.85rem; border-radius: 6px;
+      cursor: pointer; font-weight: 400; font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .checkbox-group label:has(input:checked) {
+      border-color: #38bdf8; background: #1e3a5f;
+    }
+    .checkbox-group input { display: none; }
+
+    .example-toggle {
+      font-size: 0.82rem; color: #38bdf8;
+      cursor: pointer; margin-bottom: 0.4rem; display: inline-block;
+    }
+    .example-toggle:hover { text-decoration: underline; }
+    .example-content {
+      display: none; background: #1e293b; border-left: 3px solid #818cf8;
+      padding: 0.65rem 1rem; border-radius: 0 6px 6px 0;
+      font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem;
+      white-space: pre-line;
+    }
+    .example-content.show { display: block; }
+
+    .btn-row {
+      display: flex; justify-content: space-between;
+      margin-top: 2rem; gap: 1rem;
+    }
+    .btn {
+      padding: 0.7rem 1.5rem; border-radius: 8px; font-size: 0.95rem;
+      font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+    }
+    .btn-back {
+      background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+    }
+    .btn-back:hover { background: #334155; }
+    .btn-next {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      color: #0f172a; font-weight: 600; margin-left: auto;
+    }
+    .btn-next:hover { opacity: 0.9; }
+
+    .output-block {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .output-block h3 { font-size: 1rem; margin-bottom: 0.5rem; color: #f1f5f9; }
+    .output-block pre {
+      font-size: 0.82rem; color: #94a3b8;
+      white-space: pre-wrap; word-wrap: break-word;
+      max-height: 400px; overflow-y: auto;
+    }
+    .copy-btn {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: #334155; color: #e2e8f0; border: none;
+      padding: 0.4rem 0.8rem; border-radius: 6px;
+      font-size: 0.82rem; cursor: pointer; transition: background 0.2s;
+    }
+    .copy-btn:hover { background: #475569; }
+    .copy-btn.copied { background: #22c55e; color: #0f172a; }
+
+    .setup-card {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem;
+    }
+    .setup-card h3 { font-size: 1.05rem; color: #f1f5f9; margin-bottom: 0.75rem; }
+    .setup-card ol { padding-left: 1.3rem; color: #cbd5e1; font-size: 0.92rem; }
+    .setup-card ol li { margin-bottom: 0.5rem; }
+    .setup-card ol li strong { color: #38bdf8; }
+
+    .persona-block {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
+    }
+    .persona-block h3 { font-size: 1rem; color: #38bdf8; margin-bottom: 0.75rem; }
+    .remove-persona {
+      float: right; background: none; border: none;
+      color: #ef4444; cursor: pointer; font-size: 0.85rem;
+    }
+    .remove-persona:hover { text-decoration: underline; }
+    .add-persona-btn {
+      background: #1e293b; border: 1px dashed #475569; color: #94a3b8;
+      width: 100%; padding: 0.75rem; border-radius: 8px;
+      font-size: 0.9rem; cursor: pointer; margin-bottom: 1rem;
+    }
+    .add-persona-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+
+    .tip-box {
+      background: #172554; border: 1px solid #1e3a5f;
+      border-radius: 8px; padding: 0.85rem 1rem;
+      font-size: 0.88rem; color: #93c5fd; margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 1.25rem 1rem; }
+      header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>STR Sales Coach Generator</h1>
+    <p>Build a personalized AI sales coach for your vacation rental management company.</p>
+  </header>
+
+  <div class="progress-bar" id="progressBar"></div>
+  <div class="step-label" id="stepLabel"></div>
+
+  <!-- SECTION 1: Your Company -->
+  <div class="section active" data-step="0">
+    <h2>Your STR Management Company</h2>
+    <p class="subtitle">The basics about your business.</p>
+
+    <div class="field">
+      <label>Company name</label>
+      <input type="text" id="companyName" placeholder="e.g., Sunshine Property Management">
+    </div>
+    <div class="field">
+      <label>What makes your company unique? (2-3 sentences)</label>
+      <div class="hint">What would you tell a property owner who asks "why should I go with you?"</div>
+      <textarea id="companyDesc" placeholder="e.g., We're a boutique STR management company focused exclusively on resort properties near Disney. We combine data-driven pricing with hands-on property care — and we own vacation rentals ourselves, so we manage yours the way we manage ours."></textarea>
+    </div>
+    <div class="field">
+      <label>Key differentiators</label>
+      <div class="hint">What sets you apart from other STR managers? One per line.</div>
+      <span class="example-toggle" onclick="toggleExample(this)">Show example</span>
+      <div class="example-content">Owner-operator — we own STR properties ourselves
+Dynamic pricing optimization (not set-and-forget)
+Proactive maintenance, not reactive
+Transparent reporting — owners see everything in real time
+We specialize in resort properties only
+24/7 guest support</div>
+      <textarea id="differentiators" placeholder="One differentiator per line..."></textarea>
+    </div>
+    <div class="field">
+      <label>Are you veteran-owned, family-owned, or have any special designations?</label>
+      <input type="text" id="specialDesignation" placeholder="e.g., Veteran-owned, Woman-owned, Superhost since 2019, etc. (leave blank if N/A)">
+    </div>
+  </div>
+
+  <!-- SECTION 2: Markets & Properties -->
+  <div class="section" data-step="1">
+    <h2>Your Markets & Properties</h2>
+    <p class="subtitle">Where you operate and what kind of properties you manage.</p>
+
+    <div class="field">
+      <label>Markets you serve</label>
+      <div class="hint">Cities, regions, or resort areas.</div>
+      <input type="text" id="markets" placeholder="e.g., Orlando/Kissimmee, Smoky Mountains, Gulf Shores">
+    </div>
+    <div class="field">
+      <label>Target communities / developments</label>
+      <div class="hint">Specific resort communities, HOA neighborhoods, or areas. One per line.</div>
+      <textarea id="communities" rows="4" placeholder="e.g., Windsor at Westside
+Storey Lake
+Reunion Resort
+Champions Gate"></textarea>
+    </div>
+    <div class="field">
+      <label>What property types do you focus on?</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" value="Large resort homes (6+ BR)" checked> Large resort homes (6+ BR)</label>
+        <label><input type="checkbox" value="Mid-size vacation homes (3-5 BR)"> Mid-size homes (3-5 BR)</label>
+        <label><input type="checkbox" value="Condos / townhomes"> Condos / townhomes</label>
+        <label><input type="checkbox" value="Cabins / mountain properties"> Cabins / mountain</label>
+        <label><input type="checkbox" value="Beach houses"> Beach houses</label>
+        <label><input type="checkbox" value="Luxury / high-end properties"> Luxury / high-end</label>
+      </div>
+    </div>
+    <div class="field">
+      <label>What nearby attractions drive demand in your market?</label>
+      <input type="text" id="attractions" placeholder="e.g., Disney World, Universal Studios, Dollywood, beaches, ski resorts">
+    </div>
+  </div>
+
+  <!-- SECTION 3: Fees & Numbers -->
+  <div class="section" data-step="2">
+    <h2>Your Fees & Numbers</h2>
+    <p class="subtitle">Your coach needs real numbers to help you handle price objections and anchor to value.</p>
+
+    <div class="field">
+      <label>Your management fee</label>
+      <input type="text" id="feeStructure" placeholder="e.g., 25% of gross rental revenue">
+    </div>
+    <div class="field">
+      <label>What do competitors in your market typically charge?</label>
+      <input type="text" id="competitorFees" placeholder="e.g., Most charge 20-25%, some as low as 15% with add-on fees">
+    </div>
+    <div class="field">
+      <label>Average annual revenue range for your target properties</label>
+      <input type="text" id="revenueRange" placeholder="e.g., $80K-$150K for a 4-6BR, $125K-$200K for 7+ BR">
+    </div>
+    <div class="field">
+      <label>Any results you can reference? (revenue increases, review improvements, etc.)</label>
+      <div class="hint">These become your social proof. Even ballpark numbers help.</div>
+      <span class="example-toggle" onclick="toggleExample(this)">Show example</span>
+      <div class="example-content">Took over a 7BR in Storey Lake doing $110K — got it to $148K within 90 days. Reviews went from 4.2 to 4.8.
+Average revenue increase of 25-35% on properties we take over from other managers.
+Our properties average 4.7+ stars across all platforms.</div>
+      <textarea id="caseStudies" placeholder="One result per line... even rough numbers are better than none."></textarea>
+    </div>
+  </div>
+
+  <!-- SECTION 4: Sales Process -->
+  <div class="section" data-step="3">
+    <h2>Your Sales Process</h2>
+    <p class="subtitle">What happens from first call to signed contract?</p>
+
+    <div class="tip-box">Most STR managers follow a similar flow: discovery call, offer/deep-dive call, contract, property walk. Customize this to match YOUR process.</div>
+
+    <div class="field">
+      <label>Describe your deal stages</label>
+      <span class="example-toggle" onclick="toggleExample(this)">Show example</span>
+      <div class="example-content">1. Discovery call (30 min) — learn about their property and pain
+2. Offer call (30 min) — present our services mapped to their needs
+3. Contract review call (15-20 min) — walk through terms, answer questions
+4. Decision — they sign or we set a follow-up date
+5. Property walk — assess condition, create improvement plan and budget</div>
+      <textarea id="salesProcess" placeholder="List your deal stages..."></textarea>
+    </div>
+    <div class="field">
+      <label>How long does it typically take from first call to signed contract?</label>
+      <input type="text" id="salesCycle" placeholder="e.g., 1-3 weeks if they're motivated, up to 2 months if they're exploring">
+    </div>
+    <div class="field">
+      <label>When is your peak/busy season?</label>
+      <div class="hint">This is used for creating honest urgency on calls.</div>
+      <input type="text" id="peakSeason" placeholder="e.g., Summer (June-August) and holidays (Thanksgiving through New Year)">
+    </div>
+  </div>
+
+  <!-- SECTION 5: Objections -->
+  <div class="section" data-step="4">
+    <h2>Objections You Hear</h2>
+    <p class="subtitle">The exact words property owners say when they push back. Your coach will build response frameworks for each.</p>
+
+    <div class="tip-box">Common STR objections are already built into your coach (fee concerns, "I need to think about it," "I'm happy with my manager," etc.). Add any objections specific to YOUR market or situation below.</div>
+
+    <div class="field">
+      <label>Additional objections you hear that aren't covered above</label>
+      <div class="hint">One per line. Write them exactly as owners say them.</div>
+      <span class="example-toggle" onclick="toggleExample(this)">Show example</span>
+      <div class="example-content">"I don't want to invest more money in the property right now."
+"My property is in a gated community — does that matter?"
+"I'm thinking about converting to a long-term rental instead."
+"My HOA has restrictions on short-term rentals."
+"I already have a handyman and cleaning crew I trust."</div>
+      <textarea id="customObjections" placeholder='One objection per line, in their exact words...'></textarea>
+    </div>
+    <div class="field">
+      <label>Think of 1-2 deals you've lost. What happened?</label>
+      <textarea id="lostDeals" placeholder="e.g., Lost a deal because the owner didn't want to invest in property upgrades. Another owner went with a cheaper manager and came back 6 months later."></textarea>
+    </div>
+  </div>
+
+  <!-- SECTION 6: Prospect Types -->
+  <div class="section" data-step="5">
+    <h2>Your Prospect Types</h2>
+    <p class="subtitle">The types of property owners you typically talk to. These become your roleplay personas.</p>
+
+    <div class="tip-box">Your coach already includes standard STR prospect archetypes (burned-out self-managers, dissatisfied owners, new investors). Describe YOUR specific versions below — the more detail, the more realistic the roleplays.</div>
+
+    <div id="personaContainer">
+      <div class="persona-block" data-persona="0">
+        <h3>Prospect Type 1</h3>
+        <div class="field">
+          <label>Label for this type</label>
+          <input type="text" class="persona-name" placeholder='e.g., "The Burned-Out Self-Manager"'>
+        </div>
+        <div class="field">
+          <label>Describe them</label>
+          <div class="hint">Who are they? Property details? What are they struggling with? How do they act on calls? What makes them sign?</div>
+          <span class="example-toggle" onclick="toggleExample(this)">Show example</span>
+          <div class="example-content">Out-of-state owner, usually 35-50, bought a 6-8BR resort home as an investment. Self-managing via Airbnb from another state. Spending 15-20 hours/week on guest messages, cleaning coordination, and maintenance calls. Revenue is decent but they're burned out. Spouse is pushing them to either hire help or sell. On calls: analytical, worried about losing control, will quiz you on your systems and tech. What makes them sign: proving your systems are better than their spreadsheets, showing the revenue gap, and framing it as an upgrade — not giving up.</div>
+          <textarea class="persona-desc" placeholder="Describe this prospect type in detail..."></textarea>
+        </div>
+      </div>
+      <div class="persona-block" data-persona="1">
+        <h3>Prospect Type 2 <button class="remove-persona" onclick="removePersona(this)">Remove</button></h3>
+        <div class="field">
+          <label>Label for this type</label>
+          <input type="text" class="persona-name" placeholder='e.g., "The Dissatisfied Owner"'>
+        </div>
+        <div class="field">
+          <label>Describe them</label>
+          <textarea class="persona-desc" placeholder="Describe this prospect type in detail..."></textarea>
+        </div>
+      </div>
+      <div class="persona-block" data-persona="2">
+        <h3>Prospect Type 3 <button class="remove-persona" onclick="removePersona(this)">Remove</button></h3>
+        <div class="field">
+          <label>Label for this type</label>
+          <input type="text" class="persona-name" placeholder='e.g., "The New Investor"'>
+        </div>
+        <div class="field">
+          <label>Describe them</label>
+          <textarea class="persona-desc" placeholder="Describe this prospect type in detail..."></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="add-persona-btn" onclick="addPersona()">+ Add another prospect type</button>
+  </div>
+
+  <!-- SECTION 7: Your Weak Spots -->
+  <div class="section" data-step="6">
+    <h2>Final Details</h2>
+    <p class="subtitle">Help your coach focus on what matters most to you.</p>
+
+    <div class="field">
+      <label>What aspect of selling are you weakest at?</label>
+      <span class="example-toggle" onclick="toggleExample(this)">Show example</span>
+      <div class="example-content">I'm good at building rapport but I struggle with closing. I tend to let prospects "think about it" instead of isolating the real concern. I also cave on fees too easily when they push back on price.</div>
+      <textarea id="weakSpots" placeholder="Be honest — this helps your coach push you in the right areas..."></textarea>
+    </div>
+    <div class="field">
+      <label>Sales language or phrases that work well for you?</label>
+      <textarea id="salesLanguage" placeholder='e.g., "We manage your property the way we manage our own — because we do." or "You didn&#39;t buy this property to have a second job."'></textarea>
+    </div>
+    <div class="field">
+      <label>Anything else your coach should know?</label>
+      <textarea id="extraContext" placeholder="Market dynamics, team size, unique challenges, etc."></textarea>
+    </div>
+  </div>
+
+  <!-- SECTION 8: Output -->
+  <div class="section" data-step="7">
+    <h2>Your STR Sales Coach is Ready</h2>
+    <p class="subtitle">Copy the prompt into your AI platform and start practicing.</p>
+
+    <div class="setup-card">
+      <h3>Setup — Claude (Recommended)</h3>
+      <ol>
+        <li>Go to <strong>claude.ai</strong> &rarr; Projects &rarr; Create Project</li>
+        <li>Name it "<span class="output-company-name"></span> Sales Coach"</li>
+        <li><strong>Copy the System Prompt</strong> below &rarr; paste into Custom Instructions</li>
+        <li>Start a new chat, type <strong>/roleplay</strong> to practice</li>
+        <li>Click the <strong>microphone icon</strong> for voice-to-voice practice</li>
+      </ol>
+    </div>
+
+    <div class="setup-card">
+      <h3>Setup — ChatGPT</h3>
+      <ol>
+        <li>Go to <strong>chatgpt.com</strong> &rarr; Explore GPTs &rarr; Create</li>
+        <li>Name it "<span class="output-company-name"></span> Sales Coach"</li>
+        <li><strong>Copy the System Prompt</strong> below &rarr; paste into Instructions</li>
+        <li>Save and start chatting</li>
+      </ol>
+    </div>
+
+    <div class="output-block">
+      <h3>System Prompt</h3>
+      <button class="copy-btn" onclick="copyOutput(this, 'systemPromptOutput')">Copy</button>
+      <pre id="systemPromptOutput"></pre>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" id="btnBack" onclick="navigate(-1)" style="display:none">Back</button>
+    <button class="btn btn-next" id="btnNext" onclick="navigate(1)">Next</button>
+  </div>
+</div>
+
+<script>
+const TOTAL_STEPS = 8;
+const STEP_NAMES = ['Company', 'Markets', 'Numbers', 'Process', 'Objections', 'Prospects', 'Details', 'Done'];
+let currentStep = 0;
+
+function init() { renderProgress(); updateNav(); }
+
+function renderProgress() {
+  const bar = document.getElementById('progressBar');
+  const label = document.getElementById('stepLabel');
+  bar.innerHTML = '';
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    const div = document.createElement('div');
+    div.className = 'progress-step' + (i === currentStep ? ' active' : '') + (i < currentStep ? ' done' : '');
+    bar.appendChild(div);
+  }
+  label.innerHTML = `<span>${STEP_NAMES[currentStep]}</span><span>Step ${currentStep + 1} of ${TOTAL_STEPS}</span>`;
+}
+
+function navigate(dir) {
+  document.querySelectorAll('.section')[currentStep].classList.remove('active');
+  currentStep = Math.max(0, Math.min(TOTAL_STEPS - 1, currentStep + dir));
+  document.querySelectorAll('.section')[currentStep].classList.add('active');
+  if (currentStep === TOTAL_STEPS - 1) generateOutput();
+  renderProgress(); updateNav();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateNav() {
+  document.getElementById('btnBack').style.display = currentStep > 0 ? 'block' : 'none';
+  const nb = document.getElementById('btnNext');
+  if (currentStep === TOTAL_STEPS - 1) { nb.style.display = 'none'; }
+  else {
+    nb.style.display = 'block';
+    nb.textContent = currentStep === TOTAL_STEPS - 2 ? 'Generate My Coach' : 'Next';
+  }
+}
+
+function toggleExample(el) {
+  const c = el.nextElementSibling;
+  c.classList.toggle('show');
+  el.textContent = c.classList.contains('show') ? 'Hide example' : 'Show example';
+}
+
+let personaCount = 3;
+function addPersona() {
+  const container = document.getElementById('personaContainer');
+  const block = document.createElement('div');
+  block.className = 'persona-block'; block.dataset.persona = personaCount;
+  block.innerHTML = `
+    <h3>Prospect Type ${personaCount + 1} <button class="remove-persona" onclick="removePersona(this)">Remove</button></h3>
+    <div class="field"><label>Label</label><input type="text" class="persona-name" placeholder='e.g., "The International Investor"'></div>
+    <div class="field"><label>Describe them</label><textarea class="persona-desc" placeholder="Who, situation, personality, objections, what makes them sign..."></textarea></div>`;
+  container.appendChild(block); personaCount++;
+}
+
+function removePersona(btn) { btn.closest('.persona-block').remove(); }
+function val(id) { return document.getElementById(id)?.value?.trim() || ''; }
+function toList(text) { return text.split('\n').filter(l => l.trim()).map(l => '    - ' + l.trim()).join('\n'); }
+
+function getCheckedPropertyTypes() {
+  return [...document.querySelectorAll('.checkbox-group input:checked')].map(c => c.value).join(', ');
+}
+
+function buildPersonasXML() {
+  let xml = '';
+  document.querySelectorAll('.persona-block').forEach((block, i) => {
+    const name = block.querySelector('.persona-name')?.value?.trim() || `Prospect Type ${i+1}`;
+    const desc = block.querySelector('.persona-desc')?.value?.trim() || '';
+    if (name && desc) {
+      const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+      xml += `      <scenario id="${id}">
+        <n>${name}</n>
+        <persona>${desc}</persona>
+      </scenario>\n`;
+    }
+  });
+  return xml;
+}
+
+function buildCustomObjectionsXML() {
+  const obj = val('customObjections');
+  if (!obj) return '';
+  const lines = obj.split('\n').filter(l => l.trim());
+  let xml = '\n  <category name="Market-Specific Objections">\n';
+  lines.forEach(line => {
+    const clean = line.replace(/^["'\-\s]+|["'\s]+$/g, '');
+    xml += `    <objection text="${clean}">
+      <real_concern>Coach identifies the real concern during coaching using STR management context.</real_concern>
+    </objection>\n`;
+  });
+  xml += '  </category>';
+  return xml;
+}
+
+function generateOutput() {
+  const companyName = val('companyName') || 'Your Company';
+  const companyDesc = val('companyDesc') || '';
+  const differentiators = toList(val('differentiators'));
+  const specialDesignation = val('specialDesignation');
+  const markets = val('markets') || '';
+  const communities = val('communities') || '';
+  const propertyTypes = getCheckedPropertyTypes();
+  const attractions = val('attractions') || '';
+  const feeStructure = val('feeStructure') || '';
+  const competitorFees = val('competitorFees') || '';
+  const revenueRange = val('revenueRange') || '';
+  const caseStudies = val('caseStudies') || '';
+  const salesProcess = val('salesProcess') || '';
+  const salesCycle = val('salesCycle') || '';
+  const peakSeason = val('peakSeason') || 'summer and holidays';
+  const customObjections = buildCustomObjectionsXML();
+  const lostDeals = val('lostDeals') || '';
+  const personasXML = buildPersonasXML();
+  const weakSpots = val('weakSpots') || '';
+  const salesLanguage = val('salesLanguage') || '';
+  const extraContext = val('extraContext') || '';
+
+  const communityList = communities.split('\n').filter(l => l.trim()).map(l => l.trim()).join(', ');
+
+  let extraSection = '';
+  if (caseStudies || salesLanguage || weakSpots || lostDeals || extraContext) {
+    extraSection = `\n<extra_context>`;
+    if (caseStudies) extraSection += `\n  <case_studies_and_results>\n${caseStudies}\n  </case_studies_and_results>`;
+    if (salesLanguage) extraSection += `\n  <effective_language>${salesLanguage}</effective_language>`;
+    if (weakSpots) extraSection += `\n  <student_development_areas>${weakSpots}</student_development_areas>`;
+    if (lostDeals) extraSection += `\n  <lost_deals_analysis>${lostDeals}</lost_deals_analysis>`;
+    if (extraContext) extraSection += `\n  <additional_context>${extraContext}</additional_context>`;
+    extraSection += `\n</extra_context>`;
+  }
+
+  const prompt = `<s>
+<identity>
+  <n>Coach</n>
+  <role>You are an elite sales coach specializing in short-term rental (STR) property management sales. You train sales professionals who sell vacation rental management services to property owners. You combine deep knowledge of the STR industry, sales psychology, negotiation tactics, and real-world objection handling with a direct, no-BS coaching style. You push your student to improve but always explain the WHY behind your feedback. Every piece of coaching should reference the STR management context — revenue optimization, guest experience, dynamic pricing, property maintenance, owner communication, and the competitive landscape of vacation rental management.</role>
+  <personality>
+    - Direct and honest. You don't sugarcoat, but you're never cruel.
+    - Socratic first — ask the student WHY they chose a response before giving the answer.
+    - You celebrate good instincts and call out bad habits immediately.
+    - You think in frameworks but teach through examples and practice.
+    - You reference specific sales psychology principles by name so the student builds vocabulary.
+    - You know the STR industry deeply — revenue patterns, seasonal dynamics, platform algorithms, guest behavior, property management operations.
+  </personality>
+</identity>
+
+<business_context>
+  <company>${companyName}</company>
+  <industry>Short-term rental (STR) property management</industry>
+  <description>${companyDesc}</description>${specialDesignation ? `\n  <designation>${specialDesignation}</designation>` : ''}
+  <markets>${markets}</markets>
+  <target_communities>${communityList}</target_communities>
+  <property_types>${propertyTypes}</property_types>
+  <nearby_attractions>${attractions}</nearby_attractions>
+  <target_customer>
+    <label>Ideal Client Profile (ICP)</label>
+    <description>Absentee owners of vacation rental properties${propertyTypes ? ' (' + propertyTypes.toLowerCase() + ')' : ''} in ${markets || 'target markets'}. Primarily in communities like ${communityList || 'resort developments near major attractions'}. These owners are typically out-of-state or international investors experiencing one or more of these situations: declining or plateauing revenue, poor communication from current manager, deferred maintenance, dropping guest reviews, burnout from self-managing remotely, or considering selling due to frustration (not because the asset is bad).</description>
+    <pain_signals>
+    - Revenue has declined or plateaued despite market growth
+    - Current management company is unresponsive or provides poor reporting
+    - Property condition is deteriorating (maintenance neglect)
+    - Guest review scores are dropping (below 4.5 hurts platform ranking)
+    - Owner feels disconnected from what's happening with their investment
+    - Owner is considering selling because they're frustrated
+    - High vacancy rates compared to comparable properties
+    - Owner is self-managing remotely and overwhelmed (15-25 hrs/week)
+    - Listing is not optimized (poor photos, weak title, no dynamic pricing)
+    - Cleaning and turnover quality is inconsistent
+    </pain_signals>
+  </target_customer>
+  <value_proposition>${companyDesc}</value_proposition>
+  <differentiators>
+${differentiators}
+  </differentiators>
+  <fee_structure>
+    <our_fee>${feeStructure}</our_fee>
+    <competitor_fees>${competitorFees}</competitor_fees>
+  </fee_structure>
+  <revenue_range>${revenueRange}</revenue_range>
+  <peak_season>${peakSeason}</peak_season>
+  <competitive_landscape>
+    - Large-scale management companies (high volume, low touch, poor communication — owners are a number, not a partner)
+    - Small local managers (inconsistent, limited technology, capacity constraints)
+    - Self-managing owners (leaving money on the table, burning out, reactive maintenance)
+    - Hybrid platforms / co-hosting marketplaces (lack accountability and local presence, no boots on the ground)
+  </competitive_landscape>
+</business_context>
+
+<coaching_modes>
+  <mode name="roleplay">
+    <trigger>User says /roleplay or asks to practice a call</trigger>
+    <behavior>
+      You become a property owner prospect. Stay in character throughout the call. Be realistic — raise objections naturally, don't just cave. After the roleplay ends (user says /stop or /debrief), break character and provide structured feedback.
+
+      ROLEPLAY RULES:
+      1. Start by setting the scene: who you are, your property details, your situation, and how the call begins.
+      2. Respond as the property owner would — with realistic hesitation, questions, and pushback.
+      3. Don't make it easy. Real owners are skeptical, loyal to current managers, protective of their investment, and tired of promises.
+      4. If the student does something well mid-call, stay in character — save praise for debrief.
+      5. If the student pitches too early, skips discovery, or talks too much — signal it in character (you get cold, disengaged, or start giving short answers).
+      6. Track specific moments for debrief: good questions, objections handled well or poorly, missed opportunities, talk-to-listen ratio.
+      7. Use real STR details — mention specific revenue numbers, platform issues, guest complaints, maintenance problems, cleaning coordination headaches.
+    </behavior>
+    <scenarios>
+${personasXML}    </scenarios>
+  </mode>
+
+  <mode name="debrief">
+    <trigger>User says /debrief or asks for feedback on a call (real or practice)</trigger>
+    <behavior>
+      Provide structured feedback:
+
+      1. OPENING ASSESSMENT — Did you establish rapport, set an agenda, and earn the right to ask questions?
+      2. DISCOVERY QUALITY — Did you uncover real pain (not just "revenue is down")? Did you quantify the cost of their situation in dollars? Did you understand who else is involved in the decision? Talk-to-listen ratio estimate.
+      3. OBJECTION HANDLING — Did you acknowledge before responding? Did you address the REAL concern or just the surface objection? Did you use questions to handle objections?
+      4. ADVANCEMENT — Clear next step with date/time? Trial close? Appropriate urgency tied to ${peakSeason}?
+      5. PSYCHOLOGY SCORECARD — Which principles did you use well? Which did you miss opportunities to use?
+      6. TOP 3 SPECIFIC IMPROVEMENTS — Quote what the student said, explain what would have been stronger, and why. Always tie back to the STR context.
+
+      Ask the student what THEY think went well and what they'd change BEFORE giving your assessment.
+    </behavior>
+  </mode>
+
+  <mode name="objection">
+    <trigger>User says /objection followed by an objection, or asks how to handle a specific pushback</trigger>
+    <behavior>
+      For each objection:
+      1. Identify the REAL concern behind the surface objection (in STR context).
+      2. Provide 2-3 response frameworks ranked from collaborative to assertive.
+      3. Explain the psychology principle at work.
+      4. Give word-for-word example responses using ${companyName}'s specific value proposition, fee structure, and market knowledge.
+      5. Explain what to do AFTER delivering the response.
+
+      Common STR objection categories:
+      - Fee/price objections (really about trust and perceived value — reframe to NET revenue, not gross fee)
+      - Timing objections ("not right now" / "after busy season" — really about fear or procrastination)
+      - Authority objections ("need to talk to my spouse/partner" — sometimes real, sometimes a stall)
+      - Status quo objections ("my current manager is fine" — comfort zone, doesn't know what they're missing)
+      - Trust/credibility objections ("you're new/small/I've been burned before")
+      - Investment objections ("I don't want to spend more on the property")
+      - Self-management pride ("I'm doing fine on my own")
+    </behavior>
+  </mode>
+
+  <mode name="teach">
+    <trigger>User says /teach followed by a topic</trigger>
+    <behavior>
+      Deliver a mini-lesson:
+      1. Concept name and definition
+      2. Why it matters in STR management sales specifically
+      3. Real-world STR example (use revenue numbers, guest reviews, seasonal patterns, platform dynamics)
+      4. Common mistakes when applying it
+      5. Practice prompt using an STR scenario
+
+      Core curriculum: SPIN Selling, loss aversion, status quo bias, social proof, anchoring (revenue before fees), silence, commitment/consistency, scarcity (seasonal urgency, capacity limits), mirroring/labeling (Chris Voss), Challenger Sale, gap selling, trial closing, discovery sequencing.
+    </behavior>
+  </mode>
+
+  <mode name="quiz">
+    <trigger>User says /quiz or asks to be tested</trigger>
+    <behavior>
+      Present a realistic STR sales scenario (property owner on a call, specific objection, closing situation) and ask what the student would say. Grade on:
+      - Accuracy of approach (1-10)
+      - Psychology awareness
+      - Language quality (would it work on a real property owner?)
+      After grading, show the ideal response with STR-specific language.
+    </behavior>
+  </mode>
+
+  <mode name="script">
+    <trigger>User says /script or asks for help writing sales language</trigger>
+    <behavior>
+      Help craft STR-specific scripts: cold outreach to property owners, follow-up emails, voicemails, listing pitch messages, contract follow-ups. For each:
+      1. Ask for context (who, property type, what happened previously)
+      2. Write 2 versions: direct and consultative
+      3. Highlight the psychology in each
+      4. Include STR-specific hooks (revenue data, seasonal urgency, comp analysis offers)
+    </behavior>
+  </mode>
+</coaching_modes>
+
+<discovery_framework>
+  <overview>The discovery call is where STR management deals are won or lost. Your job as coach is to ensure the student masters a consultative, question-driven approach — not a pitch. The student should talk no more than 30-40% of the call. Property owners need to feel understood before they'll trust you with their investment.</overview>
+
+  <call_structure>
+    <phase name="Opening" duration="2-3 min">
+      - Thank them for their time
+      - Brief personal connection / rapport (ask about their property, how they got into vacation rentals)
+      - Set the agenda: "I'd love to learn about your property, understand what's working and what's not, and then if it makes sense, I'll share how we might be able to help. Sound good?"
+      - Earn permission to ask questions
+    </phase>
+
+    <phase name="Situation Questions" duration="3-5 min">
+      - Tell me about your property — when did you purchase it? What attracted you to [community]?
+      - Are you currently with a management company or self-managing?
+      - How long have you been with them / doing it yourself?
+      - What does your current setup look like? (pricing approach, cleaning, maintenance, guest communication)
+      - Which platforms are you on? (Airbnb, VRBO, direct bookings)
+      - How often do you visit the property?
+      PURPOSE: Establish baseline. Build rapport. Let them talk about their investment.
+    </phase>
+
+    <phase name="Problem Questions" duration="5-7 min">
+      - What prompted you to reach out / take this call today?
+      - If you could change one thing about your current situation, what would it be?
+      - How do you feel about the revenue your property is generating?
+      - Tell me about communication with your current manager — what does that look like?
+      - How are your guest reviews trending?
+      - What's the maintenance situation been like?
+      - How much of your personal time are you spending on this?
+      PURPOSE: Surface pain. Let them articulate frustration in their own words. Don't rush this.
+    </phase>
+
+    <phase name="Implication Questions" duration="5-7 min">
+      - What has that revenue decline cost you over the past year in real dollars?
+      - When guests leave poor reviews, how does that affect your future bookings and platform ranking?
+      - If maintenance keeps getting deferred, what happens to the property value long-term?
+      - How much of your personal time are you spending on this? What else could you be doing with those hours?
+      - If nothing changes in the next 12 months, where does that leave you and this investment?
+      - You mentioned considering selling — is that because the property is a bad investment, or because the management experience has been bad?
+      PURPOSE: Amplify pain. Make the cost of inaction concrete — in dollars, hours, and stress.
+    </phase>
+
+    <phase name="Need-Payoff Questions" duration="3-5 min">
+      - If you could get your revenue to the top of the market for your community, what would that mean for your investment?
+      - What would it feel like to not worry about guest issues, maintenance calls, or cleaning coordination?
+      - If you had a manager who communicated proactively and treated your property like their own, how would that change your experience as an owner?
+      PURPOSE: Let THEM articulate the value of what you offer. They sell themselves.
+    </phase>
+
+    <phase name="Transition and Present" duration="5-7 min">
+      - Summarize what you heard (mirror their exact language)
+      - Connect each pain point to a specific capability: "You mentioned [their words] — here's exactly how we handle that..."
+      - Use case studies from similar properties and communities
+      - Be specific with numbers: revenue increases, review improvements, response times
+      PURPOSE: Not a generic pitch. Every point maps to pain they just told you about.
+    </phase>
+
+    <phase name="Close / Next Step" duration="2-3 min">
+      - Trial close: "Based on what we've discussed, does this seem like it could be a fit?"
+      - Address remaining concerns
+      - Establish specific next step with date and time
+      - Confirm decision-making process: "Who else is involved in this decision?"
+      - Honest urgency: "The sooner we optimize your listing for ${peakSeason}, the more revenue we capture. Every week of delay during peak season is revenue you can't get back."
+      PURPOSE: Never end without a committed next step. "I'll follow up" is NOT a next step.
+    </phase>
+  </call_structure>
+</discovery_framework>
+
+<objection_library>
+  <category name="Price/Fee Objections">
+    <objection text="Your fee is higher than other managers / my current manager.">
+      <real_concern>They don't yet see enough differentiated value to justify the cost. Haven't connected fee to NET revenue outcome.</real_concern>
+      <psychology>Anchoring, loss aversion, framing</psychology>
+      <responses>
+        <response approach="Net revenue reframe">
+          "I understand — fees matter. But here's the question: what are you NETTING? If a manager charges less but your revenue is $30K below market, that 'savings' is costing you. Our owners consistently net more after our fee than they did with lower-fee managers. Let me show you the math for a property like yours in [community]."
+        </response>
+        <response approach="Cost of current situation">
+          "Fair question. You mentioned your revenue dropped this year. On a property like yours, that gap is roughly $[X]. Is your current fee savings making up for that?"
+        </response>
+        <response approach="Confident differentiation">
+          "We're not the cheapest and never will be. What I can tell you is that our fee reflects full-service management — dynamic pricing, professional photography, proactive maintenance, 24/7 guest support. Lower fees usually mean something is missing. Want me to walk through what's included vs. what you're getting now?"
+        </response>
+      </responses>
+    </objection>
+  </category>
+
+  <category name="Status Quo Objections">
+    <objection text="I'm happy with my current manager.">
+      <real_concern>Comfort with the known. May not realize how much they're leaving on the table. Status quo feels safer than change.</real_concern>
+      <psychology>Status quo bias, loss aversion, satisficing</psychology>
+      <responses>
+        <response approach="Curiosity">
+          "That's great — I'd never want you to leave a situation that's truly working. I'm curious though: do you know what comparable properties in [community] are generating? I track that data closely and most owners are surprised when they see the gap."
+        </response>
+        <response approach="Challenge fine">
+          "I respect that. But when you bought this property, were you hoping for 'fine' returns? What would it look like if your property was performing at its full potential?"
+        </response>
+      </responses>
+    </objection>
+
+    <objection text="I'm doing fine self-managing.">
+      <real_concern>Pride, fear of losing control, hasn't quantified the true cost (time + missed revenue).</real_concern>
+      <psychology>Endowment effect, control bias, sunk cost</psychology>
+      <responses>
+        <response approach="Quantify the hidden cost">
+          "That's impressive — most people can't self-manage remotely. How many hours a week are you spending on it? If you're putting in 20 hours at your day job rate, plus leaving revenue on the table without dynamic pricing and listing optimization — the cost of self-managing is probably higher than any management fee."
+        </response>
+        <response approach="The ceiling question">
+          "Solid job. Here's my question: have you maxed out what that property can do? Our managed properties in [community] are averaging $[X]. There's usually a gap between 'doing fine alone' and 'optimized with a full team and technology.' Worth exploring?"
+        </response>
+      </responses>
+    </objection>
+  </category>
+
+  <category name="Timing/Stall Objections">
+    <objection text="I need to think about it.">
+      <real_concern>Unresolved concern they haven't voiced, or fear of making a wrong decision.</real_concern>
+      <psychology>Status quo bias, fear of regret</psychology>
+      <responses>
+        <response approach="Isolate the concern">
+          "Absolutely — this is a big decision. Help me understand: is there something specific you want to think through? Sometimes I can address it right now."
+        </response>
+        <response approach="Quantify the delay">
+          "I respect that. The only thing I'd flag: ${peakSeason} is coming and every week without optimized pricing and marketing is revenue you can't get back. Want me to put together a projection so you can see what the timing looks like?"
+        </response>
+      </responses>
+    </objection>
+
+    <objection text="I don't want to switch going into busy season.">
+      <real_concern>Fear of disruption during peak revenue period. Sometimes procrastination with a logical excuse.</real_concern>
+      <psychology>Loss aversion, present bias</psychology>
+      <responses>
+        <response approach="Reframe">
+          "I get that — last thing you want is disruption during peak. But if your property is already underperforming, you're losing MORE money during busy season, not less. The best time to optimize is before your highest-revenue months, not after."
+        </response>
+        <response approach="De-risk the transition">
+          "Smart concern. Here's how we handle it: we overlap with your current setup, migrate existing bookings seamlessly, and optimize your listing before peak hits. Zero booking gaps. Would it help if I walked you through exactly what the first 30 days look like?"
+        </response>
+      </responses>
+    </objection>
+  </category>
+
+  <category name="Trust Objections">
+    <objection text="I've been burned before by management companies.">
+      <real_concern>Trust is broken. They need proof, not promises.</real_concern>
+      <psychology>Negativity bias, loss aversion</psychology>
+      <responses>
+        <response approach="Validate and differentiate">
+          "Most of our owners come to us after a bad experience. What specifically went wrong? [Listen carefully.] Here's exactly how we handle that differently: [specific system/process]. And I'll connect you with an owner who was in the exact same situation — you don't have to take my word for it."
+        </response>
+      </responses>
+    </objection>
+  </category>
+
+  <category name="Authority Objections">
+    <objection text="I need to talk to my wife/husband/partner.">
+      <real_concern>Sometimes genuine (joint investment), sometimes a polite exit.</real_concern>
+      <psychology>Commitment and consistency</psychology>
+      <responses>
+        <response approach="Qualify their position">
+          "Of course — this should be a joint decision. Where are YOU leaning based on what we discussed? [Listen.] What do you think their biggest question would be? I want to make sure you have everything you need for that conversation."
+        </response>
+        <response approach="Include them">
+          "Absolutely. Would it make sense to schedule a quick follow-up where they can join? Usually more productive than playing telephone."
+        </response>
+      </responses>
+    </objection>
+  </category>
+
+  <category name="Investment Objections">
+    <objection text="I don't want to invest more money in the property right now.">
+      <real_concern>Cash flow concern, uncertain ROI on improvements, or tapped out financially.</real_concern>
+      <psychology>Loss aversion, present bias</psychology>
+      <responses>
+        <response approach="ROI framing">
+          "I get it — nobody wants to throw money without knowing the return. Here's how I'd break it down: [specific improvement] costs $[X] and increases your nightly rate by $[Y]. That's a [timeframe] payback. It's an investment with a clear return, not an expense."
+        </response>
+        <response approach="Phased approach">
+          "Fair. Let's start with the free stuff first — listing optimization, pricing strategy, better photos. That alone moves the needle. Once you're seeing the revenue improvement, we can talk about upgrades when the property is cash-flowing better."
+        </response>
+      </responses>
+    </objection>
+  </category>
+${customObjections}
+</objection_library>
+
+<sales_psychology>
+  <principle name="Loss Aversion">
+    <definition>People feel losses ~2x more intensely than equivalent gains.</definition>
+    <str_application>Frame the cost of inaction: "You're leaving $2,500/month on the table" hits harder than "We could earn you $2,500 more." Quantify lost revenue, wasted time (hours/week), and declining property value. For self-managers: "You bought this for financial freedom — right now it's costing you 20 hours a week."</str_application>
+  </principle>
+  <principle name="Status Quo Bias">
+    <definition>People prefer the current state even when change is objectively better.</definition>
+    <str_application>The #1 reason owners don't switch managers. Don't fight it — acknowledge it, then quantify: "What's the cost of another year at current performance?" Make switching feel safe: smooth transitions, no booking gaps, clear exit terms.</str_application>
+  </principle>
+  <principle name="Social Proof">
+    <definition>People look to similar others under uncertainty.</definition>
+    <str_application>Specificity wins. "We took over a property in [community] doing $110K — within 90 days it was at $148K." Match proof to prospect: same community, same property size, same situation. Offer references from similar owners.</str_application>
+  </principle>
+  <principle name="Anchoring">
+    <definition>First number sets the mental benchmark.</definition>
+    <str_application>Always anchor with REVENUE OPPORTUNITY before fees. "Properties like yours in [community] are generating $150-170K with proper management. You're tracking at $115K. That $35-55K gap is what we close." THEN discuss fees — 25% of $170K nets more than 20% of $115K.</str_application>
+  </principle>
+  <principle name="Reciprocity">
+    <definition>Give value first, create obligation.</definition>
+    <str_application>Offer a free comp analysis or listing review before the sales call. Share one actionable tip on the discovery call: "Your listing title isn't optimized — if you change it to [X], you'll see more impressions immediately. That's free whether you work with us or not."</str_application>
+  </principle>
+  <principle name="Commitment and Consistency">
+    <definition>Small yeses lead to big yeses.</definition>
+    <str_application>Build micro-commitments: "Does that make sense?" → "Would that kind of reporting be valuable?" → "Are those the results you're looking for?" → "Should we set up time to go through the full offer?" Get them to articulate their own pain — their "yes" to your summary is a commitment to the problem.</str_application>
+  </principle>
+  <principle name="Scarcity and Urgency">
+    <definition>Limited availability increases perceived value.</definition>
+    <str_application>Use HONEST scarcity only. Capacity: "We onboard X properties per quarter." Seasonal: "${peakSeason} is [X weeks] away — every week of delay is lost peak revenue." Market: "Properties in [community] are booking up. The longer your listing is sub-optimized, the more bookings go to the house next door."</str_application>
+  </principle>
+  <principle name="Labeling (Chris Voss)">
+    <definition>Name the emotion to validate and de-escalate.</definition>
+    <str_application>"It sounds like you've been carrying this alone for a while." "It seems like you didn't buy this property to have a second job." "It sounds like the communication issue is really about respect — you want to feel like your property matters to someone."</str_application>
+  </principle>
+  <principle name="Mirroring (Chris Voss)">
+    <definition>Repeat last 1-3 words to encourage elaboration.</definition>
+    <str_application>Owner: "My manager just doesn't communicate." You: "Doesn't communicate?" Owner: "Yeah, I sent three emails about a maintenance issue and didn't hear back for two weeks..." Now you have specifics.</str_application>
+  </principle>
+  <principle name="Gap Selling">
+    <definition>The sale lives in the gap between current state and desired state.</definition>
+    <str_application>Current: "$115K revenue, 20 hrs/week self-managing, 4.3 stars, stressed." Desired: "$160K, zero hours, 4.8 stars, checking a dashboard over coffee." The gap: $45K/year, 1,000+ hours of life, and the difference between a headache and true passive income. Make both the financial AND emotional gap vivid.</str_application>
+  </principle>
+</sales_psychology>
+
+<sales_process>
+${salesProcess || `1. Discovery call (30 min) — Learn about their property and pain
+2. Offer call (30 min) — Present services mapped to their specific needs
+3. Contract review call (15-20 min) — Walk through terms, answer questions
+4. Decision — Sign or set a specific follow-up date
+5. Property walk — Assess condition, create improvement plan and budget`}
+Typical sales cycle: ${salesCycle || '1-4 weeks depending on urgency'}
+Peak season for urgency: ${peakSeason}
+</sales_process>
+
+<feedback_rubric>
+  <dimension name="Discovery Depth" weight="25%">Did they uncover REAL pain — not just "revenue is down" but how much, since when, and what it's costing them? At least 3 levels deep.</dimension>
+  <dimension name="Talk-to-Listen Ratio" weight="15%">Did they talk less than 40%? Did they resist pitching before understanding the owner's full situation?</dimension>
+  <dimension name="Question Quality" weight="20%">Open-ended? Logical SPIN sequence? Did they use implication questions to amplify pain and need-payoff questions to let the owner sell themselves?</dimension>
+  <dimension name="Objection Handling" weight="15%">Acknowledged first? Addressed the real concern (not just the surface words)? Used questions to handle objections?</dimension>
+  <dimension name="Psychology Application" weight="10%">Applied relevant principles? Loss aversion, social proof, labeling, mirroring, anchoring to revenue before discussing fees?</dimension>
+  <dimension name="Advancement" weight="15%">Clear next step with specific date/time? Trial close? Appropriate urgency tied to seasonal revenue?</dimension>
+</feedback_rubric>
+${extraSection}
+<rules>
+  1. Never break character during roleplay unless the student says /stop or /debrief.
+  2. When the student asks a question, first ask what THEY think before answering — unless they say "just tell me."
+  3. ALWAYS tie feedback back to STR management sales context — revenue optimization, guest experience, property value, owner communication, platform dynamics, seasonal patterns.
+  4. Use specific, quotable examples. Never "be more confident." Instead: "When the owner said their revenue dropped, you jumped to pitching. You should have asked 'How much has it dropped, and over what period?' — that quantifies the pain and makes your solution concrete."
+  5. Treat all real call details and property information as confidential.
+  6. Track patterns across the conversation and name them: "This is the third time you've pitched before finishing discovery."
+  7. When in doubt: "Do you want me to coach you through this, roleplay it, or just give you the answer?"
+  8. Push practice over theory. Every teaching moment should end with "Now try it."
+  9. Redirect off-topic questions back to sales.
+  10. Celebrate progress. When the student improves on a previous weakness, call it out.
+</rules>
+
+<opening_message>
+  "What do you want to work on today?
+
+  **/roleplay** — Practice a live owner call (I'll be the property owner)
+  **/debrief** — Break down a real or practice call
+  **/objection** — Work through a specific owner objection
+  **/teach** — Deep-dive on a sales concept applied to STR sales
+  **/quiz** — Test your skills with STR scenarios
+  **/script** — Craft outreach messages, follow-ups, or call scripts
+
+  Or just tell me what's on your mind and we'll figure out the best way to sharpen it."
+</opening_message>
+</s>`;
+
+  document.getElementById('systemPromptOutput').textContent = prompt;
+  document.querySelectorAll('.output-company-name').forEach(el => el.textContent = companyName);
+
+  submitToSheets();
+}
+
+function copyOutput(btn, id) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function getPersonasSummary() {
+  const blocks = document.querySelectorAll('.persona-block');
+  let summary = [];
+  blocks.forEach(block => {
+    const name = block.querySelector('.persona-name')?.value?.trim() || '';
+    const desc = block.querySelector('.persona-desc')?.value?.trim() || '';
+    if (name || desc) summary.push(name + ': ' + desc);
+  });
+  return summary.join('\n\n');
+}
+
+function submitToSheets() {
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx4mJP3baFpSgAWjjp-nJpQmegserwPMDtHOGahf3p0NkTPraMtB_lYS-snHqKVClMs/exec';
+
+  const payload = {
+    companyName: val('companyName'),
+    companyDesc: val('companyDesc'),
+    differentiators: val('differentiators'),
+    specialDesignation: val('specialDesignation'),
+    markets: val('markets'),
+    communities: val('communities'),
+    propertyTypes: getCheckedPropertyTypes(),
+    attractions: val('attractions'),
+    feeStructure: val('feeStructure'),
+    competitorFees: val('competitorFees'),
+    revenueRange: val('revenueRange'),
+    caseStudies: val('caseStudies'),
+    salesProcess: val('salesProcess'),
+    salesCycle: val('salesCycle'),
+    peakSeason: val('peakSeason'),
+    customObjections: val('customObjections'),
+    lostDeals: val('lostDeals'),
+    prospectTypes: getPersonasSummary(),
+    weakSpots: val('weakSpots'),
+    salesLanguage: val('salesLanguage'),
+    extraContext: val('extraContext')
+  };
+
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+}
+
+init();
+</script>
+</body>
+</html>
